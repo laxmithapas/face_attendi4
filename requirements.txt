@@ -1,0 +1,12 @@
+facenet-pytorch
+opencv-python
+dlib
+face-recognition
+numpy
+pandas
+sqlalchemy
+streamlit
+mediapipe
+torch
+torchvision
+Pillow
