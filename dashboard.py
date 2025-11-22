@@ -135,14 +135,41 @@ elif page == "User Management":
             # Calculate stats
             total_days = len(set(log.date for log in user_logs))
             avg_duration = 0
+            late_count = 0
+            early_leave_count = 0
+            
             if user_logs:
                 avg_duration = sum(log.session_duration for log in user_logs) / len(user_logs)
+                
+                # Late/Early Logic (Assuming 9:00 AM - 5:00 PM)
+                # Late > 9:15 AM
+                # Early < 4:45 PM
+                for log in user_logs:
+                    try:
+                        check_in_time = log.check_in_time.time()
+                        if check_in_time > datetime.strptime("09:15", "%H:%M").time():
+                            late_count += 1
+                            
+                        if log.check_out_time:
+                            check_out_time = log.check_out_time.time()
+                            if check_out_time < datetime.strptime("16:45", "%H:%M").time():
+                                early_leave_count += 1
+                    except Exception:
+                        pass
             
             st.metric("Total Days Present", total_days)
             st.metric("Avg. Session Duration", f"{avg_duration:.1f} min")
+            
+            # Late/Early Stats
+            c1, c2 = st.columns(2)
+            with c1:
+                st.metric("Late Arrivals (>9:15)", late_count, delta=-late_count if late_count > 0 else None, delta_color="inverse")
+            with c2:
+                st.metric("Early Departures (<4:45)", early_leave_count, delta=-early_leave_count if early_leave_count > 0 else None, delta_color="inverse")
 
         with col2:
             st.write("### 📅 Monthly Attendance Calendar")
+            # ... (Calendar code remains same) ...
             # Simple Calendar Grid
             import calendar
             now = datetime.now()
@@ -181,17 +208,35 @@ elif page == "User Management":
                             else:
                                 cols[i].write(f"{day}") # Grey for future/weekend
 
-        # Charts
+        # Charts with Month Filter and Width Adjustment
         st.write("### 📈 Attendance Trends")
+        
         if user_logs:
+            # Month Filter
+            all_months = sorted(list(set(log.date[:7] for log in user_logs)), reverse=True)
+            if not all_months:
+                all_months = [datetime.now().strftime("%Y-%m")]
+                
+            selected_month = st.selectbox("Filter Trends by Month", all_months)
+            
+            # Filter data
             chart_data = []
             for log in user_logs:
-                chart_data.append({
-                    "Date": log.date,
-                    "Duration (min)": log.session_duration
-                })
+                if log.date.startswith(selected_month):
+                    chart_data.append({
+                        "Date": log.date,
+                        "Duration (min)": log.session_duration
+                    })
+            
             df_chart = pd.DataFrame(chart_data)
-            st.bar_chart(df_chart, x="Date", y="Duration (min)")
+            
+            # Layout adjustment (Narrower chart)
+            c_chart, c_empty = st.columns([3, 1]) # 75% width
+            with c_chart:
+                if not df_chart.empty:
+                    st.bar_chart(df_chart, x="Date", y="Duration (min)")
+                else:
+                    st.info(f"No data for {selected_month}")
         else:
             st.info("No attendance data available for charts.")
 
