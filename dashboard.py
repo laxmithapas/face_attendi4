@@ -39,7 +39,23 @@ if page == "Attendance Logs":
         
     df = pd.DataFrame(data)
     if not df.empty:
-        st.dataframe(df)
+        st.dataframe(
+            df,
+            column_config={
+                "Duration (min)": st.column_config.ProgressColumn(
+                    "Duration (min)",
+                    help="Session duration in minutes",
+                    format="%.2f min",
+                    min_value=0,
+                    max_value=480, # 8 hours
+                ),
+                "Confidence": st.column_config.NumberColumn(
+                    "Confidence",
+                    format="%.2f"
+                )
+            },
+            hide_index=True,
+        )
         
         # Export
         csv = df.to_csv(index=False).encode('utf-8')
@@ -65,16 +81,118 @@ elif page == "User Management":
         enc_count = session.query(Encoding).filter_by(person_id=user.id).count()
         days_present = get_monthly_attendance_count(user.id, current_month)
         
+        # Flag 0 encodings
+        enc_display = f"{enc_count}"
+        status = "✅ Active"
+        if enc_count == 0:
+            enc_display = "⚠️ 0 (Not Enrolled)"
+            status = "❌ Inactive"
+        
         user_data.append({
             "ID": user.id,
             "Name": user.name,
             "Email": user.email,
-            "Joined": user.created_at.strftime("%Y-%m-%d"),
-            "Encodings": enc_count,
+            "Status": status,
+            "Encodings": enc_display,
             f"Days Present ({current_month})": days_present
         })
         
     df_users = pd.DataFrame(user_data)
-    st.dataframe(df_users)
+    
+    # Apply styling for status if possible, or just show the table
+    st.dataframe(
+        df_users,
+        column_config={
+            "Status": st.column_config.TextColumn(
+                "Status",
+                help="User enrollment status"
+            ),
+        },
+        hide_index=True
+    )
+    
+    st.divider()
+    st.subheader("👤 Individual Student Profile")
+    
+    # Select User for detailed view
+    user_names = {u.name: u.id for u in users}
+    selected_user_name = st.selectbox("Select Student to View Details", ["Select a student..."] + list(user_names.keys()))
+    
+    if selected_user_name != "Select a student...":
+        user_id = user_names[selected_user_name]
+        user = session.query(Person).filter_by(id=user_id).first()
+        
+        col1, col2 = st.columns([1, 2])
+        
+        with col1:
+            st.info(f"**Name:** {user.name}")
+            st.write(f"**Email:** {user.email}")
+            st.write(f"**Joined:** {user.created_at.strftime('%Y-%m-%d')}")
+            
+            # Fetch all attendance for this user
+            user_logs = session.query(Attendance).filter_by(person_id=user_id).all()
+            
+            # Calculate stats
+            total_days = len(set(log.date for log in user_logs))
+            avg_duration = 0
+            if user_logs:
+                avg_duration = sum(log.session_duration for log in user_logs) / len(user_logs)
+            
+            st.metric("Total Days Present", total_days)
+            st.metric("Avg. Session Duration", f"{avg_duration:.1f} min")
+
+        with col2:
+            st.write("### 📅 Monthly Attendance Calendar")
+            # Simple Calendar Grid
+            import calendar
+            now = datetime.now()
+            year = now.year
+            month = now.month
+            
+            # Get present dates
+            present_dates = {log.date for log in user_logs}
+            
+            cal = calendar.monthcalendar(year, month)
+            month_name = calendar.month_name[month]
+            
+            st.write(f"**{month_name} {year}**")
+            
+            # Create a visual grid using columns
+            cols = st.columns(7)
+            days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            for i, day in enumerate(days):
+                cols[i].write(f"**{day}**")
+            
+            for week in cal:
+                cols = st.columns(7)
+                for i, day in enumerate(week):
+                    if day == 0:
+                        cols[i].write("")
+                    else:
+                        date_str = f"{year}-{month:02d}-{day:02d}"
+                        if date_str in present_dates:
+                            cols[i].success(f"{day}") # Green for present
+                        else:
+                            # Check if it's a past weekday (Absent)
+                            is_weekend = i >= 5
+                            current_date_str = now.strftime("%Y-%m-%d")
+                            if date_str < current_date_str and not is_weekend:
+                                cols[i].error(f"{day}") # Red for absent
+                            else:
+                                cols[i].write(f"{day}") # Grey for future/weekend
+
+        # Charts
+        st.write("### 📈 Attendance Trends")
+        if user_logs:
+            chart_data = []
+            for log in user_logs:
+                chart_data.append({
+                    "Date": log.date,
+                    "Duration (min)": log.session_duration
+                })
+            df_chart = pd.DataFrame(chart_data)
+            st.bar_chart(df_chart, x="Date", y="Duration (min)")
+        else:
+            st.info("No attendance data available for charts.")
 
 session.close()
