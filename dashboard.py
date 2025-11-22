@@ -161,6 +161,7 @@ elif page == "User Management":
             st.metric("Avg. Session Duration", f"{avg_duration:.1f} min")
             
             # Late/Early Stats
+            # Late/Early Stats
             c1, c2 = st.columns(2)
             with c1:
                 st.metric("Late Arrivals (>9:15)", late_count, delta=-late_count if late_count > 0 else None, delta_color="inverse")
@@ -169,12 +170,22 @@ elif page == "User Management":
 
         with col2:
             st.write("### 📅 Monthly Attendance Calendar")
-            # ... (Calendar code remains same) ...
+            
+            # Month Selection for Calendar
+            # Generate last 12 months
+            available_months = []
+            for i in range(12):
+                d = datetime.now() - pd.DateOffset(months=i)
+                available_months.append(d.strftime("%Y-%m"))
+            
+            # Use a unique key to avoid conflict with other selectboxes
+            cal_month_str = st.selectbox("Select Month", available_months, key="calendar_month_select")
+            
+            # Parse selected month
+            year, month = map(int, cal_month_str.split('-'))
+            
             # Simple Calendar Grid
             import calendar
-            now = datetime.now()
-            year = now.year
-            month = now.month
             
             # Get present dates
             present_dates = {log.date for log in user_logs}
@@ -202,7 +213,7 @@ elif page == "User Management":
                         else:
                             # Check if it's a past weekday (Absent)
                             is_weekend = i >= 5
-                            current_date_str = now.strftime("%Y-%m-%d")
+                            current_date_str = datetime.now().strftime("%Y-%m-%d")
                             if date_str < current_date_str and not is_weekend:
                                 cols[i].error(f"{day}") # Red for absent
                             else:
@@ -214,15 +225,15 @@ elif page == "User Management":
         if user_logs:
             # Month Filter
             all_months = sorted(list(set(log.date[:7] for log in user_logs)), reverse=True)
-            if not all_months:
-                all_months = [datetime.now().strftime("%Y-%m")]
-                
-            selected_month = st.selectbox("Filter Trends by Month", all_months)
+            # Add "All Time" option
+            filter_options = ["All Time"] + all_months
+            
+            selected_month = st.selectbox("Filter Trends by Month", filter_options)
             
             # Filter data
             chart_data = []
             for log in user_logs:
-                if log.date.startswith(selected_month):
+                if selected_month == "All Time" or log.date.startswith(selected_month):
                     chart_data.append({
                         "Date": log.date,
                         "Duration (min)": log.session_duration
