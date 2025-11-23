@@ -70,9 +70,15 @@ You will see a menu:
 - Press 'q' to quit.
 
 ### Dashboard
-- View attendance logs filtered by date.
-- Export logs to CSV.
-- View registered users.
+- **Attendance Logs**: View detailed logs with "Duration Bars" and "Confidence Scores".
+- **User Management**:
+    - **Status Flags**: Automatically detects users with 0 encodings (Inactive).
+    - **Student Profiles**: View individual attendance history.
+    - **Analytics**:
+        - **Calendar Heatmap**: Visual grid of attendance (Green/Red).
+        - **Late/Early Stats**: Tracks discipline issues.
+        - **Trend Charts**: Bar graphs filterable by month (or All Time).
+- **Export**: Download logs to CSV.
 
 ## Configuration
 
