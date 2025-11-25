@@ -164,9 +164,9 @@ elif page == "User Management":
             # Late/Early Stats
             c1, c2 = st.columns(2)
             with c1:
-                st.metric("Late Arrivals (>9:15)", late_count, delta=-late_count if late_count > 0 else None, delta_color="inverse")
+                st.metric("Late Arrivals (>9:15)", late_count, delta=-late_count if late_count > 0 else None)
             with c2:
-                st.metric("Early Departures (<4:45)", early_leave_count, delta=-early_leave_count if early_leave_count > 0 else None, delta_color="inverse")
+                st.metric("Early Departures (<4:45)", early_leave_count, delta=-early_leave_count if early_leave_count > 0 else None)
 
         with col2:
             st.write("### 📅 Monthly Attendance Calendar")

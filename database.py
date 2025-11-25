@@ -91,7 +91,8 @@ def get_all_encodings():
         for enc in encodings:
             data.append({
                 "person_id": enc.person_id,
-                "encoding": enc.encoding_vector
+                "encoding": enc.encoding_vector,
+                "created_at": enc.created_at
             })
         return data
     finally:

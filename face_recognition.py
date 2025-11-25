@@ -4,6 +4,7 @@ import numpy as np
 from scipy.spatial.distance import cosine
 from config import THRESHOLD_RECENT, THRESHOLD_OLD, OLD_ENCODING_AGE_MONTHS
 from datetime import datetime, timedelta
+import io
 
 class FaceRecognizer:
     def __init__(self, device=None):
@@ -50,7 +51,13 @@ class FaceRecognizer:
 
         for entry in known_encodings:
             person_id = entry['person_id']
-            known_vec = entry['encoding']
+            
+            # Load from .npy format or fallback
+            try:
+                known_vec = np.load(io.BytesIO(entry['encoding']))
+            except:
+                known_vec = np.frombuffer(entry['encoding'], dtype=np.float32)
+                
             created_at = entry['created_at']
 
             # Calculate cosine similarity
