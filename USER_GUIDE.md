@@ -97,7 +97,7 @@ This is the "Control Center" for the administrator (HR/Professor).
 #### B. User Management Tab
 *   **Status Flags**:
     *   **✅ Active**: User is enrolled correctly.
-    *   **❌ Inactive (⚠️ 0 Enrolled)**: User exists but has no face data (Bug detection).
+    *   **❌ Pending Enrollment (⚠️ 0 Enrolled)**: User exists but has no face data (Bug detection).
 *   **Student Profile View**:
     *   **Calendar Heatmap 📅**: A visual grid showing attendance patterns (Green=Present, Red=Absent).
     *   **Late/Early Stats ⏰**: Counters for "Late Arrivals" (>9:15 AM) and "Early Departures" (<4:45 PM).

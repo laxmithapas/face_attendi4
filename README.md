@@ -72,7 +72,7 @@ You will see a menu:
 ### Dashboard
 - **Attendance Logs**: View detailed logs with "Duration Bars" and "Confidence Scores".
 - **User Management**:
-    - **Status Flags**: Automatically detects users with 0 encodings (Inactive).
+    - **Status Flags**: Automatically detects users with 0 encodings (Pending Enrollment).
     - **Student Profiles**: View individual attendance history.
     - **Analytics**:
         - **Calendar Heatmap**: Visual grid of attendance (Green/Red).

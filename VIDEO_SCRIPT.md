@@ -32,7 +32,7 @@
 
 "Next, we have the **User Management** section. This gives us a high-level overview of all registered students."
 
-*   **Status Flags:** "Notice the **Status** column. It instantly flags users. If a user is marked as 'Inactive' with a warning symbol, it means they haven't completed their face enrollment properly, alerting the admin to take action."
+*   **Status Flags:** "Notice the **Status** column. It instantly flags users. If a user is marked as 'Pending Enrollment' with a warning symbol, it means they haven't completed their face enrollment properly, alerting the admin to take action."
 *   **Encodings:** "We also track the number of face encodings stored for each user, ensuring the system has enough data to recognize them accurately."
 
 ---

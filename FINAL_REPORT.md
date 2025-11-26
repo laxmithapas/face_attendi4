@@ -71,7 +71,7 @@ I am also thankful to the **Department of Computer Science** for providing the n
 
 ## 2. ABSTRACT
 
-This project presents a robust **Face Recognition Attendance System** enhanced with **Liveness Detection** and **Behavioral Analytics**. Traditional attendance methods (manual, RFID) are prone to errors and fraud ("buddy punching"). Our system leverages Deep Learning (FaceNet) for high-accuracy recognition and Eye Aspect Ratio (EAR) for anti-spoofing. Furthermore, it introduces a "Workforce Analytics" dashboard that tracks session duration, late arrivals, and attendance trends, transforming raw logs into actionable insights for institutional management.
+This project presents a robust **Face Recognition Attendance System** enhanced with **Bio-Liveness Fraud Protection** and **Behavioral Analytics**. Traditional attendance methods (manual, RFID) are prone to errors and fraud ("buddy punching"). Our system leverages Deep Learning (FaceNet) for high-accuracy recognition and Eye Aspect Ratio (EAR) for anti-spoofing. Furthermore, it introduces a "Workforce Analytics" dashboard that tracks session duration, late arrivals, and attendance trends, transforming raw logs into actionable insights for institutional management.
 
 ---
 

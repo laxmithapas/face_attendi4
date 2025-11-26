@@ -86,7 +86,7 @@ elif page == "User Management":
         status = "✅ Active"
         if enc_count == 0:
             enc_display = "⚠️ 0 (Not Enrolled)"
-            status = "❌ Inactive"
+            status = "⚠️ Pending Enrollment"
         
         user_data.append({
             "ID": user.id,

@@ -61,7 +61,7 @@ The system is composed of three main modules:
 *   **Trend Analysis:** Bar charts visualizing attendance consistency over time (filterable by Month or All Time).
 
 ### 4. Data Integrity Checks
-*   **Enrollment Validation:** The dashboard flags users with "0 Encodings" as **Inactive**, preventing "Ghost Users" who exist in the database but cannot be recognized.
+*   **Enrollment Validation:** The dashboard flags users with "0 Encodings" as **Pending Enrollment**, preventing "Ghost Users" who exist in the database but cannot be recognized.
 
 ---
 
