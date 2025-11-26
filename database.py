@@ -151,3 +151,21 @@ def get_monthly_attendance_count(person_id, month_str):
         return 0
     finally:
         session.close()
+
+def delete_user(person_id):
+    """Delete a user and all associated data."""
+    session = get_session()
+    try:
+        person = session.query(Person).filter_by(id=person_id).first()
+        if person:
+            session.delete(person)
+            session.commit()
+            logger.info(f"Deleted user: {person_id}")
+            return True
+        return False
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error deleting user: {e}")
+        return False
+    finally:
+        session.close()

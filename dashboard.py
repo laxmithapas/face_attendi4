@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from database import get_session, Person, Attendance, Encoding, get_monthly_attendance_count
+from database import get_session, Person, Attendance, Encoding, get_monthly_attendance_count, delete_user
 from datetime import datetime
 
 st.set_page_config(page_title="Attendance Dashboard", layout="wide")
@@ -160,13 +160,24 @@ elif page == "User Management":
             st.metric("Total Days Present", total_days)
             st.metric("Avg. Session Duration", f"{avg_duration:.1f} min")
             
+            # Punctuality Score
+            punctuality_score = 0
+            if total_days > 0:
+                punctuality_score = ((total_days - late_count) / total_days) * 100
+            
+            st.metric("Punctuality Score", f"{punctuality_score:.1f}%", delta=f"{punctuality_score:.1f}%", delta_color="normal" if punctuality_score >= 80 else "inverse")
+            
             # Late/Early Stats
-            # Late/Early Stats
-            c1, c2 = st.columns(2)
+            # Late/Early/On-Time Stats
+            on_time_count = total_days - late_count
+            
+            c1, c2, c3 = st.columns(3)
             with c1:
-                st.metric("Late Arrivals (>9:15)", late_count, delta=-late_count if late_count > 0 else None)
+                st.metric("On Time Arrivals", on_time_count, delta=on_time_count, delta_color="normal")
             with c2:
-                st.metric("Early Departures (<4:45)", early_leave_count, delta=-early_leave_count if early_leave_count > 0 else None)
+                st.metric("Late Arrivals (>9:15)", late_count, delta=late_count, delta_color="inverse")
+            with c3:
+                st.metric("Early Departures (<4:45)", early_leave_count, delta=early_leave_count, delta_color="inverse")
 
         with col2:
             st.write("### 📅 Monthly Attendance Calendar")
@@ -234,9 +245,14 @@ elif page == "User Management":
             chart_data = []
             for log in user_logs:
                 if selected_month == "All Time" or log.date.startswith(selected_month):
+                    # Ensure minimum visibility for 0 duration
+                    duration = log.session_duration
+                    if duration == 0:
+                        duration = 0.5 # Small bar to show "Present"
+                    
                     chart_data.append({
                         "Date": log.date,
-                        "Duration (min)": log.session_duration
+                        "Duration (min)": duration
                     })
             
             df_chart = pd.DataFrame(chart_data)
