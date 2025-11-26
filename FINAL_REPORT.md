@@ -140,16 +140,18 @@ The system follows a Model-View-Controller (MVC) pattern:
 1.  **Vision Module:** Uses OpenCV for video capture and `facenet-pytorch` for embeddings.
 2.  **Logic Module:** Implements the "Check-In/Check-Out" logic to calculate session duration.
 3.  **Analytics Module:** A Streamlit-based web app for visualizing trends.
+4.  **Security Module:** Handles **Encryption** (Fernet), **Secure Deletion**, **Audit Logging** (Login tracking), and **Session Management** (Auto-timeout).
 
 ### 6.3 Database Schema (SQLite)
 *   **Table `persons`**: `id`, `name`, `email`, `created_at`.
-*   **Table `encodings`**: `person_id`, `encoding_vector` (BLOB), `image_path`.
+*   **Table `encodings`**: `person_id`, `encoding_vector` (Encrypted BLOB), `image_path`.
 *   **Table `attendance`**: `person_id`, `date`, `check_in_time`, `check_out_time`, `session_duration`, `confidence_score`.
 
 ### 6.4 Algorithms
 *   **MTCNN (Multi-task Cascaded Convolutional Networks):** Used for robust face detection and alignment.
 *   **FaceNet (Inception ResNet V1):** Maps faces to a 128-dimensional Euclidean space.
 *   **Eye Aspect Ratio (EAR):** Used for liveness detection. Formula: `EAR = (||p2-p6|| + ||p3-p5||) / (2 * ||p1-p4||)`
+*   **Fernet Encryption:** Symmetric encryption for securing stored biometric templates.
 
 ---
 

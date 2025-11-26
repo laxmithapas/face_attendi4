@@ -48,6 +48,26 @@ class Attendance(Base):
     
     person = relationship("Person", back_populates="attendances")
 
+class AuditLog(Base):
+    __tablename__ = 'audit_logs'
+    
+    id = Column(Integer, primary_key=True)
+    event_type = Column(String, nullable=False) # e.g., "LOGIN", "DELETE_USER"
+    details = Column(String, nullable=True)
+    timestamp = Column(DateTime, default=datetime.now)
+
+def log_audit_event(event_type, details=None):
+    session = get_session()
+    try:
+        log = AuditLog(event_type=event_type, details=details)
+        session.add(log)
+        session.commit()
+        logger.info(f"Audit Event: {event_type} - {details}")
+    except Exception as e:
+        logger.error(f"Error logging audit event: {e}")
+    finally:
+        session.close()
+
 def init_db():
     """Initialize the database tables."""
     Base.metadata.create_all(engine)
@@ -71,10 +91,21 @@ def add_person(name, email=None):
     finally:
         session.close()
 
+from security import encrypt_data, decrypt_data
+import shutil
+
+# ... (imports remain same)
+
+# ... (classes remain same)
+
+# ... (init_db, get_session, add_person remain same)
+
 def add_encoding(person_id, encoding_bytes, image_path=None):
     session = get_session()
     try:
-        enc = Encoding(person_id=person_id, encoding_vector=encoding_bytes, image_path=image_path)
+        # Encrypt the encoding before storing
+        encrypted_encoding = encrypt_data(encoding_bytes)
+        enc = Encoding(person_id=person_id, encoding_vector=encrypted_encoding, image_path=image_path)
         session.add(enc)
         session.commit()
     except Exception as e:
@@ -89,9 +120,16 @@ def get_all_encodings():
         encodings = session.query(Encoding).all()
         data = []
         for enc in encodings:
+            # Decrypt the encoding
+            try:
+                decrypted_encoding = decrypt_data(enc.encoding_vector)
+            except Exception:
+                # Fallback for legacy unencrypted data
+                decrypted_encoding = enc.encoding_vector
+                
             data.append({
                 "person_id": enc.person_id,
-                "encoding": enc.encoding_vector,
+                "encoding": decrypted_encoding,
                 "created_at": enc.created_at
             })
         return data
@@ -153,11 +191,27 @@ def get_monthly_attendance_count(person_id, month_str):
         session.close()
 
 def delete_user(person_id):
-    """Delete a user and all associated data."""
+    """Delete a user and all associated data, including images."""
     session = get_session()
     try:
         person = session.query(Person).filter_by(id=person_id).first()
         if person:
+            # Delete image directory if it exists
+            # Assuming images are stored in enrollment_images/{person_id}
+            # We need to import ENROLLMENT_DIR from config, but to avoid circular import issues if config imports database,
+            # we can infer it or just check the image_path of the first encoding.
+            
+            # Better approach: Get one encoding to find the path
+            enc = session.query(Encoding).filter_by(person_id=person_id).first()
+            if enc and enc.image_path:
+                user_dir = os.path.dirname(enc.image_path)
+                if os.path.exists(user_dir):
+                    try:
+                        shutil.rmtree(user_dir)
+                        logger.info(f"Deleted image directory: {user_dir}")
+                    except Exception as e:
+                        logger.error(f"Error deleting directory {user_dir}: {e}")
+
             session.delete(person)
             session.commit()
             logger.info(f"Deleted user: {person_id}")

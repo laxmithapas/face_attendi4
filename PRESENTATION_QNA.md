@@ -87,10 +87,26 @@ This document is your "Cheat Sheet" for the expert review. It covers every possi
 
 ---
 
+## 🛡️ Section 5: Security & Compliance (New Features)
+
+**Q13: How do you secure the Admin Dashboard?**
+*   **Answer:** "I implemented a multi-layered security approach:
+    1.  **Authentication:** A password-protected login screen prevents unauthorized access.
+    2.  **Session Timeout:** To prevent 'shoulder surfing', the system automatically logs out the admin after **5 minutes of inactivity**.
+    3.  **Audit Logging:** Every login attempt (Success or Failure) is recorded in an immutable `AuditLog` table, creating a forensic trail."
+
+**Q14: How is the biometric data protected?**
+*   **Answer:** "Biometric data (face encodings) is sensitive PII (Personally Identifiable Information).
+    *   **Encryption:** I use **Fernet (Symmetric Encryption)** to encrypt the 128-D vectors before storing them in the database. Even if the database is stolen, the attacker only sees gibberish.
+    *   **Secure Deletion:** My 'Cascading Delete' ensures that when a user is removed, their database record AND their physical image files are wiped permanently."
+
+---
+
 ## ⚡ Quick-Fire Technical Stats (Memorize These!)
 
 *   **Face Embedding Size:** 128 Dimensions
 *   **Input Image Size:** 160x160 pixels (Standard for FaceNet)
 *   **Liveness Threshold:** EAR < 0.25 (usually indicates a blink)
-*   **Similarity Metric:** Cosine Similarity / Euclidean Distance
+*   **Session Timeout:** 300 Seconds (5 Minutes)
+*   **Encryption Standard:** Fernet (AES-128 based)
 *   **Frameworks:** PyTorch (Model), Streamlit (UI), SQLAlchemy (DB)

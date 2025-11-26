@@ -8,8 +8,21 @@ A robust, age-invariant, and fraud-resistant face recognition attendance system 
 - **Appearance Variation Handling**: Captures multiple angles/expressions during enrollment.
 - **Liveness Detection**: Prevents spoofing using Eye Aspect Ratio (blink detection).
 - **Real-time Attendance**: Marks attendance automatically with confidence scores.
+- **Enterprise-Grade Security**:
+    - **Encryption**: Fernet (AES-128) encryption for biometric data.
+    - **Access Control**: Password-protected dashboard with Session Timeout.
+    - **Audit Trails**: Logs all login attempts and security events.
 - **Admin Dashboard**: Streamlit-based interface to view logs and manage users.
 - **Data Persistence**: SQLite database with SQLAlchemy ORM.
+
+## 🛡️ Security & Privacy
+
+This system is designed with "Privacy by Design" principles:
+
+1.  **Biometric Encryption**: Face encodings are encrypted before storage. Even if the database is compromised, the data is unusable.
+2.  **Session Security**: The Admin Dashboard enforces a **5-minute session timeout** to prevent unauthorized access.
+3.  **Audit Logging**: A dedicated `audit_logs` table records every login success/failure and critical system action.
+4.  **Secure Deletion**: Deleting a user triggers a "Cascading Delete" that wipes their profile, attendance history, and physical image files.
 
 ## 🔬 Research & Citations
 
@@ -67,23 +80,6 @@ You will see a menu:
 ### Attendance
 - The system will detect faces and check for liveness (blinking).
 - Attendance is marked after consecutive frames of successful recognition + liveness check.
-- Press 'q' to quit.
-
-### Dashboard
-- **Attendance Logs**: View detailed logs with "Duration Bars" and "Confidence Scores".
-- **User Management**:
-    - **Status Flags**: Automatically detects users with 0 encodings (Pending Enrollment).
-    - **Student Profiles**: View individual attendance history.
-    - **Analytics**:
-        - **Calendar Heatmap**: Visual grid of attendance (Green/Red).
-        - **Late/Early Stats**: Tracks discipline issues.
-        - **Trend Charts**: Bar graphs filterable by month (or All Time).
-- **Export**: Download logs to CSV.
-
-## Configuration
-
-Edit `config.py` to adjust:
-- `THRESHOLD_RECENT` / `THRESHOLD_OLD`: Recognition sensitivity.
 - `BLINK_THRESHOLD`: Liveness sensitivity.
 - `CAMERA_ID`: Webcam index.
 

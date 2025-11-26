@@ -14,7 +14,17 @@
 
 ---
 
-## 2. Attendance Logs (The Daily View)
+## 2. Security & Login (The Gatekeeper)
+*(Action: Show the Login Screen)*
+
+"Before we even see the data, we encounter the **Security Layer**."
+
+*   **Authentication:** "The dashboard is protected by a secure login screen. Only authorized administrators with the correct credentials can access sensitive attendance data."
+*   **Session Timeout:** "For enhanced security, the system includes an **Automatic Session Timeout**. If the admin is inactive for 5 minutes, they are automatically logged out to prevent unauthorized access."
+
+---
+
+## 3. Attendance Logs (The Daily View)
 *(Action: Click on "Attendance Logs" in the sidebar)*
 
 "First, let's look at the **Attendance Logs**. This section provides a real-time view of today's attendance activity."

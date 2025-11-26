@@ -1,15 +1,51 @@
 import streamlit as st
 import pandas as pd
-from database import get_session, Person, Attendance, Encoding, get_monthly_attendance_count, delete_user
+import time
 from datetime import datetime
+from database import get_session, Person, Attendance, Encoding, get_monthly_attendance_count, delete_user, log_audit_event
 
-st.set_page_config(page_title="Attendance Dashboard", layout="wide")
+# ... (setup code)
 
-st.title("Face Recognition Attendance Dashboard")
+# Authentication
+SESSION_TIMEOUT = 300 # 5 minutes
 
-# Sidebar
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+if 'last_activity' not in st.session_state:
+    st.session_state.last_activity = time.time()
+
+# Check Timeout
+if st.session_state.authenticated:
+    if time.time() - st.session_state.last_activity > SESSION_TIMEOUT:
+        st.session_state.authenticated = False
+        st.warning("Session timed out. Please login again.")
+        log_audit_event("SESSION_TIMEOUT", "User session expired")
+        st.rerun()
+    else:
+        st.session_state.last_activity = time.time()
+
+def check_password():
+    password = st.text_input("Enter Admin Password", type="password")
+    if st.button("Login"):
+        if password == "admin123":
+            st.session_state.authenticated = True
+            st.session_state.last_activity = time.time()
+            log_audit_event("LOGIN_SUCCESS", "Admin logged in")
+            st.rerun()
+        else:
+            st.error("Incorrect Password")
+            log_audit_event("LOGIN_FAILURE", "Incorrect password attempt")
+
+# ... (rest of auth logic)
+
+if not st.session_state.authenticated:
+    check_password()
+    st.stop()
+
+# Sidebar Navigation (Only show if authenticated)
 st.sidebar.header("Navigation")
 page = st.sidebar.radio("Go to", ["Attendance Logs", "User Management"])
+
 
 session = get_session()
 
@@ -173,11 +209,11 @@ elif page == "User Management":
             
             c1, c2, c3 = st.columns(3)
             with c1:
-                st.metric("On Time Arrivals", on_time_count, delta=on_time_count, delta_color="normal")
+                st.metric("On Time", on_time_count, delta=on_time_count, delta_color="normal", help="Arrived before 9:15 AM")
             with c2:
-                st.metric("Late Arrivals (>9:15)", late_count, delta=late_count, delta_color="inverse")
+                st.metric("Late (>9:15)", late_count, delta=late_count, delta_color="inverse", help="Arrived after 9:15 AM")
             with c3:
-                st.metric("Early Departures (<4:45)", early_leave_count, delta=early_leave_count, delta_color="inverse")
+                st.metric("Early (<4:45)", early_leave_count, delta=early_leave_count, delta_color="inverse", help="Left before 4:45 PM")
 
         with col2:
             st.write("### 📅 Monthly Attendance Calendar")

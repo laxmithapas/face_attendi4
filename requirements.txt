@@ -10,3 +10,4 @@ mediapipe
 torch
 torchvision
 Pillow
+cryptography

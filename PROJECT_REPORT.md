@@ -48,26 +48,6 @@ The system is composed of three main modules:
 ### 1. Robust Biometric Security
 *   **Anti-Spoofing:** The system rejects photos or videos displayed on screens by requiring a natural blink.
 *   **Confidence Scores:** Every attendance record includes a confidence percentage (e.g., 98% match), creating an audit trail.
-
-### 2. Smart Attendance Logging
-*   **Auto-Duration Calculation:** The system automatically calculates the total hours spent on campus/office.
-*   **Zero-Touch Operation:** Users simply walk past the camera; no buttons needed.
-
-### 3. Advanced Admin Dashboard (Analytics)
-*   **Real-Time Logs:** View live check-ins with "Duration Bars" indicating work progress.
-*   **Student Profiles:** Dedicated pages for each user showing their specific history.
-*   **Calendar Heatmap:** A visual grid (Green/Red) showing monthly attendance at a glance.
-*   **Discipline Stats:** Automatic counters for **Late Arrivals** (>9:15 AM) and **Early Departures** (<4:45 PM).
-*   **Trend Analysis:** Bar charts visualizing attendance consistency over time (filterable by Month or All Time).
-
-### 4. Data Integrity Checks
-*   **Enrollment Validation:** The dashboard flags users with "0 Encodings" as **Pending Enrollment**, preventing "Ghost Users" who exist in the database but cannot be recognized.
-
----
-
-## 5. 💻 Technical Implementation Details
-
-### Database Schema
 *   **Table `persons`**: Stores Name, Email, Join Date.
 *   **Table `encodings`**: Stores the 128-d vector blobs and reference image paths.
 *   **Table `attendance`**: Stores Date, Check-In, Check-Out, Confidence Score, and Session Duration.
