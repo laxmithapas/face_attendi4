@@ -100,9 +100,20 @@ import shutil
 
 # ... (init_db, get_session, add_person remain same)
 
+import io
+import numpy as np
+
+# ... (imports)
+
 def add_encoding(person_id, encoding_bytes, image_path=None):
     session = get_session()
     try:
+        # Ensure data is bytes (serialize numpy array if needed)
+        if isinstance(encoding_bytes, np.ndarray):
+            f = io.BytesIO()
+            np.save(f, encoding_bytes)
+            encoding_bytes = f.getvalue()
+            
         # Encrypt the encoding before storing
         encrypted_encoding = encrypt_data(encoding_bytes)
         enc = Encoding(person_id=person_id, encoding_vector=encrypted_encoding, image_path=image_path)
@@ -141,26 +152,42 @@ def mark_attendance(person_id, confidence):
     try:
         now = datetime.now()
         date_str = now.strftime("%Y-%m-%d")
+        current_hour = now.hour
         
-        # Check if already checked in today
-        attendance = session.query(Attendance).filter_by(person_id=person_id, date=date_str).first()
+        # Check if checked in THIS HOUR (Slot-based)
+        # We process slots based on the hour of check-in
+        attendance = session.query(Attendance).filter(
+            Attendance.person_id == person_id,
+            Attendance.date == date_str
+        ).all()
         
-        if attendance:
-            # Update check-out time
-            attendance.check_out_time = now
-            duration = (now - attendance.check_in_time).total_seconds() / 60.0
-            attendance.session_duration = duration
-            logger.info(f"Updated attendance (Check-out) for person_id: {person_id}")
+        # Find record for current hour
+        current_slot_record = None
+        for record in attendance:
+            if record.check_in_time.hour == current_hour:
+                current_slot_record = record
+                break
+        
+        if current_slot_record:
+            # Update check-out time (Frictionless: Check-out is optional but recorded if they look at camera again)
+            # Only update if at least 1 minute passed to avoid instant flickers
+            if (now - current_slot_record.check_in_time).total_seconds() > 60:
+                current_slot_record.check_out_time = now
+                duration = (now - current_slot_record.check_in_time).total_seconds() / 60.0
+                current_slot_record.session_duration = duration
+                logger.info(f"Updated attendance (Check-out) for person_id: {person_id} at {now}")
         else:
-            # Create new check-in
+            # Create new check-in for this slot
             attendance = Attendance(
                 person_id=person_id,
                 date=date_str,
                 check_in_time=now,
-                confidence_score=confidence
+                check_out_time=now, # Initialize with same time (0 duration until updated)
+                confidence_score=confidence,
+                session_duration=0.0
             )
             session.add(attendance)
-            logger.info(f"Marked attendance (Check-in) for person_id: {person_id}")
+            logger.info(f"Marked attendance (Check-in) for person_id: {person_id} in slot {current_hour}:00")
             
         session.commit()
         return True

@@ -182,11 +182,16 @@ def run_attendance_system():
                     if current_time - state['challenge_start'] > 5.0:
                         state['challenge'] = CHALLENGE_NONE
                 
-            # Display info
+            # Display info (Name at BOTTOM)
             color = (0, 255, 0) if person_id else (0, 0, 255)
             label = f"{name} ({confidence:.2f})"
-            cv2.putText(frame, label, (int(box[0]), int(box[1]) - 10),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            
+            # Draw background for name
+            (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+            cv2.rectangle(frame, (int(box[0]), int(box[1] + box[3])), (int(box[0] + w), int(box[1] + box[3] + h + 10)), color, -1)
+            
+            cv2.putText(frame, label, (int(box[0]), int(box[1] + box[3] + 15)),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
             
             # Debug info for pose
             # cv2.putText(frame, f"Y:{liveness_data['yaw']:.0f} P:{liveness_data['pitch']:.0f}", (10, 50 + 20*i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)

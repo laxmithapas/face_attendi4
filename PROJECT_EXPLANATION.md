@@ -43,21 +43,6 @@ Before writing code, we studied existing systems:
 
 ---
 
-## 4. Project Purpose and Features
-
-Our main goal is to automate attendance securely. Here are the main features:
-
-*   **📸 One-Time Enrollment:** You only need to register your face once. We capture 5 angles (Front, Left, Right, Smile, Neutral) to learn your face perfectly.
-*   **⚡ Real-Time Recognition:** The camera recognizes you instantly as you walk by.
-*   **👁️ Liveness Check:** The system checks if your eyes are blinking to ensure you are real.
-*   **⏱️ Auto Check-In/Out:** It records when you arrive (Check-In) and when you leave (Check-Out) to calculate your total work hours.
-*   **💻 Admin Dashboard:** A website for teachers/managers to see who is present, who is late, and view monthly reports.
-
----
-
-## 5. Folder / File Structure
-
-Here is how our project is organized, like a filing cabinet:
 
 ```text
 face_attendi4/
@@ -120,18 +105,36 @@ User runs `python main.py`. The Main Menu appears.
 3.  User poses (Front, Left, Right...).
 4.  System saves the "Face Encodings" (digital fingerprint) to the database.
 
-### 🏢 Step 3: Daily Attendance
+3.  **Logic Module (The Brain):**
+    *   **Class Slot Validation:** The system divides the day into subject slots (9-10, 10-11, etc.).
+    *   **Frictionless Check-in:** A single face recognition event during a class hour automatically marks the student as "Present" for that subject.
+    *   **Weekly Analytics:** The dashboard aggregates these "Subject Credits" to show a highly accurate weekly attendance graph.
+
+---
+
+## 8. How the App Works Step-By-Step
+
+### 🟢 Step 1: Start
+User runs `python main.py`. The Main Menu appears.
+
+### 📸 Step 2: Enrollment (One time)
+1.  User selects "Enroll".
+2.  Camera opens.
+3.  User poses (Front, Left, Right...).
+4.  System saves the "Face Encodings" (digital fingerprint) to the database.
+
+### 🏢 Step 3: Frictionless Attendance
 1.  User selects "Start Attendance".
 2.  Camera opens.
 3.  **Face Detection:** AI finds a face.
 4.  **Face Recognition:** AI compares face with database. Match found!
-5.  **Liveness Check:** AI waits for a blink. Blink detected!
-6.  **Success:** System marks "Present" and saves the time.
+5.  **Slot Validated:** System checks the current time (e.g., 9:15 AM).
+6.  **Success:** System marks "Present" for that specific Subject Slot.
 
 ### 📊 Step 4: Admin Review
 1.  Admin selects "Launch Dashboard".
 2.  Website opens.
-3.  Admin sees who is present, late, or absent.
+3.  Admin sees the "Weekly Subject Graph" showing exactly which classes were attended.
 
 ---
 
@@ -190,15 +193,18 @@ You need **Python** installed on your computer.
 
 ```mermaid
 graph TD
-    A[User] -->|Looks at Camera| B(Camera Input)
+    A[User] -->|Walks into Class| B(Camera Input)
     B --> C{Face Detection AI}
     C -->|Face Found| D{Liveness Check}
     D -->|Blink Detected| E{Face Recognition AI}
     D -->|No Blink| X[Reject: Spoof]
-    E -->|Match Found| F[Database (SQLite)]
-    E -->|No Match| Y[Unknown User]
-    F --> G[Admin Dashboard]
-    G -->|View Reports| H[Administrator]
+    E -->|Match Found| F{Slot Validation}
+    F -->|Current Hour = 9 AM| G[Mark 'Subject 1' Present]
+    F -->|Current Hour = 10 AM| H[Mark 'Subject 2' Present]
+    G --> I[Database (SQLite)]
+    H --> I
+    I --> J[Admin Dashboard]
+    J -->|Weekly Subject Graph| K[Administrator]
 ```
 
 ### 🔄 Process Flowchart

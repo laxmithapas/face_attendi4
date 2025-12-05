@@ -58,13 +58,19 @@
 
 ---
 
-## 5. Attendance Trends (Analytics)
-*(Action: Scroll down to the Chart)*
+---
 
-"Finally, at the bottom, we have the **Attendance Trends** chart."
+---
 
-*   **Bar Graph:** "This graph visualizes the student's duration for each day."
-*   **Month Filter:** "We can filter this by month to analyze performance over time. This helps us answer questions like, 'Is this student's attendance improving or declining?'"
+## 5. Weekly Subject Attendance (The "Frictionless" Graph)
+*(Action: Scroll down to the Bar Chart)*
+
+"Finally, let's look at the **Weekly Subject Attendance** report. This is where our system combines **Accuracy** with **Speed**."
+
+"We've implemented a **Frictionless Check-in** system."
+
+*   **The Flow:** "A student simply walks into the class. The camera recognizes them and instantly marks them present for that subject slot (e.g., 9-10 AM). There is **no need to queue** for checking out."
+*   **The Validation:** "The system automatically validates if they were present during the specific class hour. If a student attends the 9 AM class but skips the 10 AM class, the graph instantly reflects that drop."
 
 ---
 

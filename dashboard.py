@@ -168,139 +168,72 @@ elif page == "User Management":
             # Fetch all attendance for this user
             user_logs = session.query(Attendance).filter_by(person_id=user_id).all()
             
-            # Calculate stats
-            total_days = len(set(log.date for log in user_logs))
-            avg_duration = 0
-            late_count = 0
-            early_leave_count = 0
+            # --- NEW SUBJECT-WISE LOGIC ---
+            from datetime import timedelta
             
-            if user_logs:
-                avg_duration = sum(log.session_duration for log in user_logs) / len(user_logs)
+            today = datetime.now()
+            start_of_week = today - timedelta(days=today.weekday()) # Monday
+            start_of_week_date = start_of_week.date()
+            
+            weekly_subjects = {"Mon": 0, "Tue": 0, "Wed": 0, "Thu": 0, "Fri": 0}
+            days_present_week = 0
+            
+            # Filter for current week
+            current_week_logs = [log for log in user_logs if datetime.strptime(log.date, "%Y-%m-%d").date() >= start_of_week_date]
+            
+            # Process daily logs
+            logs_by_date = {}
+            for log in current_week_logs:
+                if log.date not in logs_by_date:
+                    logs_by_date[log.date] = []
+                logs_by_date[log.date].append(log)
                 
-                # Late/Early Logic (Assuming 9:00 AM - 5:00 PM)
-                # Late > 9:15 AM
-                # Early < 4:45 PM
-                for log in user_logs:
-                    try:
-                        check_in_time = log.check_in_time.time()
-                        if check_in_time > datetime.strptime("09:15", "%H:%M").time():
-                            late_count += 1
-                            
-                        if log.check_out_time:
-                            check_out_time = log.check_out_time.time()
-                            if check_out_time < datetime.strptime("16:45", "%H:%M").time():
-                                early_leave_count += 1
-                    except Exception:
-                        pass
-            
-            st.metric("Total Days Present", total_days)
-            st.metric("Avg. Session Duration", f"{avg_duration:.1f} min")
-            
-            # Punctuality Score
-            punctuality_score = 0
-            if total_days > 0:
-                punctuality_score = ((total_days - late_count) / total_days) * 100
-            
-            st.metric("Punctuality Score", f"{punctuality_score:.1f}%", delta=f"{punctuality_score:.1f}%", delta_color="normal" if punctuality_score >= 80 else "inverse")
-            
-            # Late/Early Stats
-            # Late/Early/On-Time Stats
-            on_time_count = total_days - late_count
-            
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                st.metric("On Time", on_time_count, delta=on_time_count, delta_color="normal", help="Arrived before 9:15 AM")
-            with c2:
-                st.metric("Late (>9:15)", late_count, delta=late_count, delta_color="inverse", help="Arrived after 9:15 AM")
-            with c3:
-                st.metric("Early (<4:45)", early_leave_count, delta=early_leave_count, delta_color="inverse", help="Left before 4:45 PM")
-
-        with col2:
-            st.write("### 📅 Monthly Attendance Calendar")
-            
-            # Month Selection for Calendar
-            # Generate last 12 months
-            available_months = []
-            for i in range(12):
-                d = datetime.now() - pd.DateOffset(months=i)
-                available_months.append(d.strftime("%Y-%m"))
-            
-            # Use a unique key to avoid conflict with other selectboxes
-            cal_month_str = st.selectbox("Select Month", available_months, key="calendar_month_select")
-            
-            # Parse selected month
-            year, month = map(int, cal_month_str.split('-'))
-            
-            # Simple Calendar Grid
-            import calendar
-            
-            # Get present dates
-            present_dates = {log.date for log in user_logs}
-            
-            cal = calendar.monthcalendar(year, month)
-            month_name = calendar.month_name[month]
-            
-            st.write(f"**{month_name} {year}**")
-            
-            # Create a visual grid using columns
-            cols = st.columns(7)
-            days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-            for i, day in enumerate(days):
-                cols[i].write(f"**{day}**")
-            
-            for week in cal:
-                cols = st.columns(7)
-                for i, day in enumerate(week):
-                    if day == 0:
-                        cols[i].write("")
-                    else:
-                        date_str = f"{year}-{month:02d}-{day:02d}"
-                        if date_str in present_dates:
-                            cols[i].success(f"{day}") # Green for present
-                        else:
-                            # Check if it's a past weekday (Absent)
-                            is_weekend = i >= 5
-                            current_date_str = datetime.now().strftime("%Y-%m-%d")
-                            if date_str < current_date_str and not is_weekend:
-                                cols[i].error(f"{day}") # Red for absent
-                            else:
-                                cols[i].write(f"{day}") # Grey for future/weekend
-
-        # Charts with Month Filter and Width Adjustment
-        st.write("### 📈 Attendance Trends")
-        
-        if user_logs:
-            # Month Filter
-            all_months = sorted(list(set(log.date[:7] for log in user_logs)), reverse=True)
-            # Add "All Time" option
-            filter_options = ["All Time"] + all_months
-            
-            selected_month = st.selectbox("Filter Trends by Month", filter_options)
-            
-            # Filter data
-            chart_data = []
-            for log in user_logs:
-                if selected_month == "All Time" or log.date.startswith(selected_month):
-                    # Ensure minimum visibility for 0 duration
-                    duration = log.session_duration
-                    if duration == 0:
-                        duration = 0.5 # Small bar to show "Present"
+            for date_str, logs in logs_by_date.items():
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                # Only count Mon-Fri
+                if date_obj.weekday() > 4: 
+                    continue
                     
-                    chart_data.append({
-                        "Date": log.date,
-                        "Duration (min)": duration
-                    })
+                day_name = date_obj.strftime("%a")
+                
+                # Count subjects (Slots: 9, 10, 11, 12)
+                subjects_count = 0
+                slots = [9, 10, 11, 12]
+                
+                for slot_hour in slots:
+                    # Check if any log started in this hour
+                    for log in logs:
+                        if log.check_in_time.hour == slot_hour:
+                            subjects_count += 1
+                            break
+                            
+                weekly_subjects[day_name] = subjects_count
+                if subjects_count > 0:
+                    days_present_week += 1
+
+            # --- METRICS ---
+            st.metric("Total Days Present (Current Week)", f"{days_present_week} / 5")
             
-            df_chart = pd.DataFrame(chart_data)
+            # --- WEEKLY CHART ---
+            st.write("### 📊 Weekly Subject Attendance")
+            st.caption("Number of subjects attended per day (Max 4)")
             
-            # Layout adjustment (Narrower chart)
-            c_chart, c_empty = st.columns([3, 1]) # 75% width
-            with c_chart:
-                if not df_chart.empty:
-                    st.bar_chart(df_chart, x="Date", y="Duration (min)")
-                else:
-                    st.info(f"No data for {selected_month}")
-        else:
-            st.info("No attendance data available for charts.")
+            chart_data = pd.DataFrame({
+                "Day": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+                "Subjects": [weekly_subjects[d] for d in ["Mon", "Tue", "Wed", "Thu", "Fri"]]
+            })
+            
+            st.bar_chart(chart_data, x="Day", y="Subjects")
+            
+        st.divider()
+        st.subheader("⚠️ Danger Zone")
+        if st.button("🗑️ Delete User", type="primary"):
+            if delete_user(user_id):
+                st.success(f"User {user.name} deleted successfully!")
+                log_audit_event("DELETE_USER", f"Deleted user {user.name} ({user.id})")
+                time.sleep(1)
+                st.rerun()
+            else:
+                st.error("Failed to delete user.")
 
 session.close()
