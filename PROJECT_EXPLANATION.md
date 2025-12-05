@@ -191,21 +191,22 @@ You need **Python** installed on your computer.
 
 ### 🏗️ Architecture Diagram
 
-```mermaid
-graph TD
-    A[User] -->|Walks into Class| B(Camera Input)
-    B --> C{Face Detection AI}
-    C -->|Face Found| D{Liveness Check}
-    D -->|Blink Detected| E{Face Recognition AI}
-    D -->|No Blink| X[Reject: Spoof]
-    E -->|Match Found| F{Slot Validation}
-    F -->|Current Hour = 9 AM| G[Mark 'Subject 1' Present]
-    F -->|Current Hour = 10 AM| H[Mark 'Subject 2' Present]
-    G --> I[Database (SQLite)]
-    H --> I
-    I --> J[Admin Dashboard]
-    J -->|Weekly Subject Graph| K[Administrator]
-```
+**System Architecture Flow:**
+
+1.  **User Walks into Class** 🚶
+    *   *Input:* Camera captures video stream.
+2.  **Face Detection AI** 🔍
+    *   *Action:* Finds faces in the frame.
+3.  **Liveness Check** 👁️
+    *   *Action:* Checks for blinking to prevent spoofing.
+4.  **Face Recognition AI** 🤖
+    *   *Action:* Identifies the person from the database.
+5.  **Slot Validation (The Brain)** 🧠
+    *   *Logic:* "Is it 9 AM? Mark Subject 1. Is it 10 AM? Mark Subject 2."
+6.  **Database Storage** 💾
+    *   *Action:* Saves the specific subject credit.
+7.  **Admin Dashboard** 📊
+    *   *Output:* Displays the Weekly Subject Graph.
 
 ### 🔄 Process Flowchart
 
