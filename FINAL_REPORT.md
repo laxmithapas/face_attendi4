@@ -169,41 +169,27 @@ The system follows a Model-View-Controller (MVC) pattern:
 
 ### 8.1 System Architecture
 
-```mermaid
-graph TD
-    User[User] -->|Video Feed| Camera
-    Camera --> Detector[Face Detection (MTCNN)]
-    Detector --> Liveness[Liveness Check (Blink)]
-    Liveness -->|Pass| Recognizer[Face Recognition (FaceNet)]
-    Liveness -->|Fail| Alert[Spoof Alert]
-    Recognizer -->|Match| DB[(SQLite Database)]
-    DB --> Dashboard[Admin Dashboard]
-    Dashboard --> Admin[Administrator]
-```
+**Architecture Flow:**
+1.  **User Input:** Video Feed from Camera.
+2.  **Face Detection:** MTCNN locates the face.
+3.  **Liveness Check:** System verifies blinking.
+    *   *If Fail:* Spoof Alert.
+    *   *If Pass:* Proceed to Recognition.
+4.  **Face Recognition:** FaceNet generates encoding.
+5.  **Database Match:** Compares with stored encrypted profiles.
+6.  **Admin Dashboard:** Visualizes the results.
 
 ### 8.2 Data Flow (Attendance Logic)
 
-```mermaid
-sequenceDiagram
-    participant Camera
-    participant System
-    participant Database
-    
-    Camera->>System: Frame Input
-    System->>System: Detect Face & Check Liveness
-    alt Liveness Passed
-        System->>Database: Query Face Encodings
-        Database-->>System: Match Found (User ID)
-        System->>Database: Check Today's Logs
-        alt No Record
-            System->>Database: Insert Check-In Time
-        else Record Exists
-            System->>Database: Update Check-Out Time
-        end
-    else Liveness Failed
-        System->>System: Ignore Frame
-    end
-```
+**Data Sequence:**
+1.  **Camera** sends Frame Input to System.
+2.  **System** detects Face & Checks Liveness.
+3.  **System** queries Database for Face Encodings.
+4.  **Database** returns User ID (if match found).
+5.  **System** checks Today's Logs:
+    *   *No Record:* Insert **Check-In** Time.
+    *   *Record Exists:* Update **Check-Out** Time.
+6.  *If Liveness Fails:* System ignores the frame.
 
 ---
 
