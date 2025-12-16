@@ -26,16 +26,15 @@ This project aims to modernize traditional attendance systems by leveraging **Fa
 The system is composed of three main modules:
 
 ### A. The Vision Module (The "Eyes")
-*   **Face Detection (MTCNN):** Locates faces in the video feed, robust against lighting changes.
-*   **Face Recognition (FaceNet):** Converts face images into 128-dimensional numerical vectors ("Encodings").
+*   **Face Detection (RetinaFace):** Locates faces using a single-shot detector with FPN (Feature Pyramid Networks).
+*   **Face Recognition (ArcFace):** Converts face images into 512-dimensional vectors ("Embeddings") on a hypersphere.
 *   **Liveness Detection (EAR):** Calculates the **Eye Aspect Ratio** to detect blinking, ensuring the subject is a live human.
 
 ### B. The Logic Module (The "Brain")
 *   **Enrollment:** Captures 5 angles of a user's face to create a robust profile.
-*   **Identification:** Compares live video encodings with the database using Euclidean distance.
+*   **Identification:** Matches live video embeddings with the database using **Cosine Similarity**.
 *   **Session Logic:**
-    *   **Check-In:** First sighting of the day.
-    *   **Check-Out:** Last sighting of the day (continuously updated).
+    *   **Slot Validation:** Marks attendance based on the specific Class Hour (subject-wise).
 
 ### C. The Analytics Module (The "Dashboard")
 *   **Database (SQLite):** Stores User Profiles, Encodings, and Attendance Logs.
@@ -49,12 +48,13 @@ The system is composed of three main modules:
 *   **Anti-Spoofing:** The system rejects photos or videos displayed on screens by requiring a natural blink.
 *   **Confidence Scores:** Every attendance record includes a confidence percentage (e.g., 98% match), creating an audit trail.
 *   **Table `persons`**: Stores Name, Email, Join Date.
-*   **Table `encodings`**: Stores the 128-d vector blobs and reference image paths.
-*   **Table `attendance`**: Stores Date, Check-In, Check-Out, Confidence Score, and Session Duration.
+*   **Table `encodings`**: Stores the 512-d encrypted vector blobs.
+*   **Table `attendance`**: Stores Date, Check-In, Check-Out, and Subject Credits.
 
 ### Algorithms Used
-*   **FaceNet (Inception ResNet v1):** Pre-trained on VGGFace2 dataset for state-of-the-art accuracy.
-*   **Euclidean Distance:** Used to measure similarity between faces (Lower distance = Higher match).
+*   **RetinaFace (ResNet50):** For dense face localization in crowded environments.
+*   **ArcFace (Angular Margin):** Pre-trained on MS-Celeb-1M for SOTA accuracy.
+*   **Cosine Similarity:** Used to measure similarity between vectors (Higher score = Higher match).
 
 ---
 

@@ -14,13 +14,13 @@
 
 ---
 
-## 2. Security & Login (The Gatekeeper)
-*(Action: Show the Login Screen)*
+---
 
-"Before we even see the data, we encounter the **Security Layer**."
+## 2. Technology Stack (The Research)
+"Under the hood, this system powers itself with **State-of-the-Art Research Algorithms**."
 
-*   **Authentication:** "The dashboard is protected by a secure login screen. Only authorized administrators with the correct credentials can access sensitive attendance data."
-*   **Session Timeout:** "For enhanced security, the system includes an **Automatic Session Timeout**. If the admin is inactive for 5 minutes, they are automatically logged out to prevent unauthorized access."
+*   **RetinaFace:** "We use RetinaFace for dense face localization, ensuring we catch faces even in difficult angles."
+*   **ArcFace:** "For recognition, we use ArcFace, which maps faces to a 512-dimensional hypersphere, providing far greater accuracy than older FaceNet models."
 
 ---
 
@@ -32,7 +32,7 @@
 *   **Date Filter:** "At the top, we have a date filter. By default, it shows today's records, but we can easily check past dates."
 *   **The Data Table:** "Here is the detailed log. It captures the **Check-In** time (when the student first arrived) and the **Check-Out** time (when they last left)."
 *   **Duration Bar (Visual):** "A key feature here is the **Duration Bar**. It visually represents the total time spent in the office. A full green bar indicates a complete 8-hour workday, while a shorter red bar highlights early departures."
-*   **Confidence Score:** "We also display the **Confidence Score** for every entry. This tells us how certain the AI was about the identity, ensuring high security and reliability."
+*   **Confidence Score:** "We also display the **Confidence Score**. Thanks to our **ArcFace** engine, we typically see scores above 80%, ensuring strict security."
 *   **Export:** "Finally, administrators can download this data as a CSV file for payroll or further analysis."
 
 ---

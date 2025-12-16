@@ -102,13 +102,17 @@ User runs `python main.py`. The Main Menu appears.
 ### 📸 Step 2: Enrollment (One time)
 1.  User selects "Enroll".
 2.  Camera opens.
-3.  User poses (Front, Left, Right...).
-4.  System saves the "Face Encodings" (digital fingerprint) to the database.
+3.  **RetinaFace** finds the face with high precision.
+4.  **ArcFace** generates a unique 512-D embedding.
+5.  System saves this "Digital Signature" to the database.
 
-3.  **Logic Module (The Brain):**
-    *   **Class Slot Validation:** The system divides the day into subject slots (9-10, 10-11, etc.).
-    *   **Frictionless Check-in:** A single face recognition event during a class hour automatically marks the student as "Present" for that subject.
-    *   **Weekly Analytics:** The dashboard aggregates these "Subject Credits" to show a highly accurate weekly attendance graph.
+### 🏢 Step 3: Frictionless Attendance
+1.  User selects "Start Attendance".
+2.  Camera opens.
+3.  **Face Detection:** **RetinaFace** locates faces (even if masked or side-view).
+4.  **Face Recognition:** **ArcFace** calculates Cosine Similarity.
+5.  **Slot Validated:** System checks the current time (e.g., 9:15 AM).
+6.  **Success:** System marks "Present" for that specific Subject Slot.
 
 ---
 
@@ -164,12 +168,10 @@ You need **Python** installed on your computer.
 ---
 
 ## 10. Simple Definitions
-
-*   **Face Encoding:** Imagine measuring the distance between your eyes, nose, and mouth, and writing it down as a list of 128 numbers. That list is an "encoding". Computers compare these lists to recognize you.
-*   **Dataset:** A collection of data. In our case, the "dataset" is the photos we take during enrollment.
-*   **CNN (Convolutional Neural Network):** A type of AI brain that is very good at understanding pictures. We use it to find faces.
-*   **Embedding:** Another word for "Encoding". It's the math version of your face.
-*   **Threshold:** A limit. If the AI is 80% sure it's you, and our "threshold" is 75%, then it says "Yes". If it's only 60% sure, it says "No".
+*   **Face Encoding:** Imagine measuring 512 different unique features of your face. That list is an "embedding". Computers compare these to recognize you.
+*   **RetinaFace:** A modern "Single-Stage Detector" that is much better at seeing faces in crowds than older methods.
+*   **ArcFace:** A state-of-the-art recognition model that puts faces on a "sphere" to separate them better.
+*   **Cosine Similarity:** The math used to see if two face angles are pointing in the same direction (Match) or not.
 
 ---
 
@@ -178,10 +180,10 @@ You need **Python** installed on your computer.
 **Scenario:** "TechCorp Office"
 
 *   **Alice** arrives at work at 8:55 AM. She walks past the entrance camera.
-*   The system recognizes her and sees her blink.
+*   **RetinaFace** spots her immediately.
 *   **System:** "Welcome Alice! Checked in at 8:55 AM."
 *   **Bob** tries to mark attendance for his friend **Charlie** (who is late) by holding up Charlie's photo.
-*   The system sees the face but notices it is **not blinking**.
+*   The system sees the face but notices it is **not blinking** (Liveness Check).
 *   **System:** "Fake Face Detected. Access Denied."
 *   **Manager** opens the Dashboard at 10:00 AM. She sees Alice is "Present" (Green) and Charlie is "Absent" (Red).
 
@@ -195,12 +197,12 @@ You need **Python** installed on your computer.
 
 1.  **User Walks into Class** 🚶
     *   *Input:* Camera captures video stream.
-2.  **Face Detection AI** 🔍
-    *   *Action:* Finds faces in the frame.
+2.  **Detection (RetinaFace)** 🔍
+    *   *Action:* Finds faces with pixel-perfect alignment.
 3.  **Liveness Check** 👁️
     *   *Action:* Checks for blinking to prevent spoofing.
-4.  **Face Recognition AI** 🤖
-    *   *Action:* Identifies the person from the database.
+4.  **Recognition (ArcFace)** 🤖
+    *   *Action:* Identifies the person via 512-D Cosine Match.
 5.  **Slot Validation (The Brain)** 🧠
     *   *Logic:* "Is it 9 AM? Mark Subject 1. Is it 10 AM? Mark Subject 2."
 6.  **Database Storage** 💾

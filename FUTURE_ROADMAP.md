@@ -1,49 +1,45 @@
-# 🚀 Future Roadmap: Evolution from Baseline to SOTA
+# 🚀 Future Roadmap: Development Trajectory
 
-This document outlines the strategic upgrade path for **Face Attendi v4**. It contrasts our current "Classical Baseline" with modern "State-of-the-Art" (SOTA) methods, demonstrating our academic awareness of the field's evolution.
+This document outlines the evolutionary path of **Face Attendi**. We have successfully transitioned from a Classical Baseline (v1) to a State-of-the-Art Research System (v2).
 
 ---
 
-## 1. Face Detection: The Pivot to Single-Stage Detectors
+## 1. Phase 1: The Baseline (v1) - *COMPLETED*
+*   **Detection:** MTCNN (Multi-task Cascaded CNN).
+*   **Recognition:** FaceNet (Triplet Loss).
+*   **Liveness:** Simple Blink check.
+*   **Result:** A working prototype demonstrating the concept of "Frictionless Attendance".
 
-| Feature | Current Baseline (Face Attendi v4) | SOTA Upgrade (v5 Target) |
+---
+
+## 2. Phase 2: The SOTA Upgrade (v2) - *CURRENT STATUS* 📍
+**We have successfully implemented detailed research upgrades to meet 2024/2025 academic standards.**
+
+| Feature | SOTA Implementation | Research Backing |
 | :--- | :--- | :--- |
-| **Model** | **MTCNN** (Multi-task Cascaded CNN) [2016] | **RetinaFace** (Single-stage Dense Detector) [2020] |
-| **Architecture** | 3-Stage Cascade (P-Net -> R-Net -> O-Net) | Single-stage with Feature Pyramid Networks (FPN) |
-| **Pros** | Lightweight, easy to interpret, good for frontal faces. | Validated on WIDER FACE dataset. Handles extreme occlusion and tiny faces much better. |
-| **Why Change?** | MTCNN struggles with side profiles and heavy occlusion compared to modern dense detectors. |
+| **Detection** | **RetinaFace** (ResNet50) | *Deng et al., CVPR 2020* - Handles masks & occlusion. |
+| **Recognition** | **ArcFace** (Angular Margin) | *Deng et al., CVPR 2019* - Hypersphere embedding space. |
+| **Matching** | **Cosine Similarity** | Mathematically superior to Euclidean distance for high-dimensional vectors. |
+| **Analytics** | **Weekly Subject Graph** | Focuses on subject-wise attendance credits. |
 
-> **Viva Defense:** "We used MTCNN as a reliable, lightweight baseline to establish our end-to-end pipeline. For v5, we have identified RetinaFace as the optimal upgrade to handle crowded or occluded scenarios."
-
----
-
-## 2. Face Recognition: From Triplet Loss to Angular Margin
-
-| Feature | Current Baseline (Face Attendi v4) | SOTA Upgrade (v5 Target) |
-| :--- | :--- | :--- |
-| **Model** | **FaceNet** (Inception ResNet v1) [2015] | **ArcFace / InsightFace** (ResNet-100) [2019] |
-| **Loss Function** | Triplet Loss (Euclidean Distance) | Additive Angular Margin Loss (Geodesic Distance) |
-| **Pros** | Proven industry standard, excellent documentation. | Maximizes class separability on hypersphere. Better discrimination for large-scale datasets (MS-Celeb-1M). |
-| **Why Change?** | Triplet mining can be unstable during training. | Margin-based losses provide sharper decision boundaries between similar-looking identities. |
-
-> **Viva Defense:** "FaceNet provided a strong foundation for our prototype. However, we acknowledge that ArcFace's angular margin loss offers superior discriminative power, which is our next step for scaling the system."
+> **Viva Defense:** "We did not just stick to 2015-era tutorials. We refactored the entire core engine to use InsightFace (RetinaFace + ArcFace) to align with current Computer Vision research."
 
 ---
 
-## 3. Liveness Detection: Beyond Geometric Heuristics
+## 3. Phase 3: The Enterprise Scale (Future Goals v3)
+Now that the core engine is robust, future work will focus on **Scale** and **Accessibility**.
 
-| Feature | Current Baseline (Face Attendi v4) | SOTA Upgrade (v5 Target) |
-| :--- | :--- | :--- |
-| **Method** | **EAR Optimization** (Geometric Layout) [2016] | **Deep FAS** (Face Anti-Spoofing) [2023] |
-| **Logic** | Calculates Eye Aspect Ratio from landmarks. | CNN/Transformer analyzing texture (rPPG, Moiré patterns). |
-| **Pros** | Extremely fast, explainable, no training data needed. | Robust against high-quality video replay attacks. |
-| **Cons** | Can be fooled by high-frame-rate video replays. | Requires heavy computation and large diverse datasets. |
+### A. Deep Anti-Spoofing (Deep FAS)
+*   **Current:** EAR (Blink) + Geometric Checks.
+*   **Future:** Implement a **Texture-based CNN** (e.g., MiniFASNet) to detect "Moiré patterns" from screen replays.
+    *   *Reference:* Yu et al., "Deep Learning for Face Anti-Spoofing: A Survey" (IEEE 2023).
 
-> **Viva Defense:** "EAR is an excellent 'first line of defense' due to its speed. A production-grade system would combine EAR with a secondary Deep-FAS network to analyze texture cues for definitive spoof detection."
+### B. Mobile Integration
+*   **Plan:** Develop a **Flutter/React Native App** for students to view their own attendance graphs on their phones.
+*   **Backend:** Expose `main.py` logic via a **FastAPI** REST interface.
+
+### C. Cloud Deployment
+*   **Plan:** Containerize the application using **Docker**.
+*   **Target:** Deploy to AWS/GCP with a managed PostgreSQL database for handling 10,000+ users.
 
 ---
-
-## 4. Summary of Evolution
-
-*   **v4 (Current):** Focuses on **System Integration**, **Behavioral Analytics**, and **Baseline Security** using classical, interpretable models.
-*   **v5 (Planned):** Will focus on **Model Robustness** by swapping the backbone components (RetinaFace + ArcFace) while keeping the Logic/Analytics modules intact.
