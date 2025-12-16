@@ -1,22 +1,30 @@
 import cv2
 import time
 import numpy as np
+import random
 from face_detection import FaceDetector
 from landmark_detection import FaceAligner
 from face_recognition import FaceRecognizer
 from liveness_detection import LivenessDetector
-from database import get_all_encodings, mark_attendance, get_monthly_attendance_count, get_session, Person
-from config import CAMERA_ID, FRAME_WIDTH, FRAME_HEIGHT, PROCESS_EVERY_N_FRAMES, CONSECUTIVE_FRAMES
+from database import get_all_encodings, mark_attendance, get_session, Person
+from config import CAMERA_ID, FRAME_WIDTH, FRAME_HEIGHT, PROCESS_EVERY_N_FRAMES
 from utils import get_logger
 
 logger = get_logger()
 
 def run_attendance_system():
-    print("=== Face Recognition Attendance System ===")
-    print("Loading models and data...")
+    print("=== Face Attendi v2 (SOTA Upgrade) ===")
+    print("Initializing RetinaFace (Detection) & ArcFace (Recognition)...")
     
+    # Initialize Modules
     detector = FaceDetector()
-    aligner = FaceAligner()
+    try:
+        # We need FaceAligner for DLIB landmarks (Liveness)
+        aligner = FaceAligner()
+    except Exception as e:
+        print(f"Warning: Landmark predictor not found. Liveness will fail. {e}")
+        aligner = None
+
     recognizer = FaceRecognizer()
     liveness = LivenessDetector()
     
@@ -34,8 +42,6 @@ def run_attendance_system():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
     
-    import random
-    
     # Challenge states
     CHALLENGE_NONE = 0
     CHALLENGE_BLINK = 1
@@ -51,12 +57,12 @@ def run_attendance_system():
         CHALLENGE_RIGHT: "TURN HEAD RIGHT"
     }
     
-    # State tracking per person
     # {person_id: {'state': CHALLENGE_X, 'start_time': t, 'passed': bool}}
     user_states = {}
     
     frame_count = 0
-    recognition_cache = [] # List of dicts for current frame faces
+    recognition_cache = {} # Map i -> {pid, conf}
+    
     print("Starting video stream. Press 'q' to quit.")
     
     while True:
@@ -67,55 +73,61 @@ def run_attendance_system():
         frame_count += 1
         current_time = time.time()
         
-        # Detect faces
-        boxes, probs, landmarks_list = detector.detect_faces(frame)
+        # 1. Detection (RetinaFace)
+        # Returns list of InsightFace Face objects
+        faces = detector.detect_faces(frame)
         
-        # Reset cache if new detection cycle (optional, but we want to keep it for N frames)
-        # Actually, if the number of faces changes, our index-based cache breaks.
-        # Simple fix: If frame_count % N == 0, we clear cache inside the loop logic?
-        # No, we clear it here if it's a recognition frame.
-        if frame_count % PROCESS_EVERY_N_FRAMES == 0:
-            recognition_cache = []
+        # 2. Draw Basic Boxes
+        detector.draw_faces(frame, faces)
+
+        # Clear cache if scene changed drastically? 
+        # For simplicity in v2, we re-verify every N frames but track by index `i` is risky if faces swap.
+        # But InsightFace is fast enough (0.1s) we might run recognition EVERY frame on GPU?
+        # On CPU it might struggle. Let's keep N=3 optimization.
         
-        # Draw boxes
-        detector.draw_faces(frame, boxes, probs)
-        
-        for i, box in enumerate(boxes):
-            # Get dlib landmarks for advanced liveness
-            dlib_landmarks = aligner.get_landmarks(frame, box)
+        for i, face in enumerate(faces):
+            box = face.bbox.astype(int) # x1, y1, x2, y2
             
-            # Check liveness metrics
-            liveness_data = liveness.check_liveness(dlib_landmarks, FRAME_WIDTH, FRAME_HEIGHT)
+            # 3. Liveness Check (EAR via Dlib)
+            # We need 68 landmarks for EAR. InsightFace only gives 5.
+            # Convert [x1, y1, x2, y2] to [x, y, w, h] for dlib
+            dlib_box = [box[0], box[1], box[2]-box[0], box[3]-box[1]]
             
-            # Recognition (Identify who it is first)
+            liveness_data = {
+                "is_blinking": False,
+                "is_smiling": False,
+                "head_pose": "CENTER"
+            }
+            
+            if aligner:
+                try:
+                    dlib_landmarks = aligner.get_landmarks(frame, dlib_box)
+                    liveness_data = liveness.check_liveness(dlib_landmarks, FRAME_WIDTH, FRAME_HEIGHT)
+                except Exception:
+                    pass # Face might be out of bounds for dlib
+
+            # 4. Recognition (ArcFace)
             name = "Unknown"
             confidence = 0.0
             person_id = None
             
-            # Caching logic to prevent flickering
-            # We use a simple index-based matching since N is small (3 frames)
-            # In a complex app, we would use centroid tracking
-            
-            if frame_count % PROCESS_EVERY_N_FRAMES == 0:
-                aligned_face = aligner.align_face(frame, dlib_landmarks)
-                embedding = recognizer.get_embedding(aligned_face)
-                person_id, confidence = recognizer.match_face(embedding, known_data)
-                
-                # Update cache
-                if len(recognition_cache) <= i:
-                    recognition_cache.append({})
-                recognition_cache[i] = {'person_id': person_id, 'confidence': confidence}
+            # Use cached result if valid
+            if frame_count % PROCESS_EVERY_N_FRAMES != 0 and i in recognition_cache:
+                cached = recognition_cache[i]
+                person_id = cached['person_id']
+                confidence = cached['confidence']
             else:
-                # Use cached result if available
-                if i < len(recognition_cache):
-                    cached = recognition_cache[i]
-                    person_id = cached.get('person_id')
-                    confidence = cached.get('confidence', 0.0)
+                # Run Matching
+                # InsightFace already computed the embedding!
+                if face.embedding is not None:
+                    person_id, confidence = recognizer.match_face(face.embedding, known_data)
+                    recognition_cache[i] = {'person_id': person_id, 'confidence': confidence}
             
+            # 5. Application Logic
             if person_id:
                 name = person_names.get(person_id, "Unknown")
                 
-                # Initialize state if new
+                # Initialize state
                 if person_id not in user_states:
                     user_states[person_id] = {
                         'challenge': CHALLENGE_NONE,
@@ -125,78 +137,56 @@ def run_attendance_system():
                 
                 state = user_states[person_id]
                 
-                # Cooldown check for attendance
+                # Cooldown check
                 last_marked = getattr(run_attendance_system, 'last_marked', {})
                 is_marked_recently = person_id in last_marked and (current_time - last_marked[person_id] < 60)
                 
                 if is_marked_recently:
-                     cv2.putText(frame, "Attendance Marked!", (int(box[0]), int(box[1]) - 50),
+                     cv2.putText(frame, "Attendance Marked!", (box[0], box[1] - 50),
                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-                     state['challenge'] = CHALLENGE_NONE # Reset
+                     state['challenge'] = CHALLENGE_NONE
                 
                 elif not state['verified']:
-                    # Logic: Issue a challenge if none active
                     if state['challenge'] == CHALLENGE_NONE:
-                        # Pick a random challenge
                         state['challenge'] = random.choice([CHALLENGE_BLINK, CHALLENGE_SMILE, CHALLENGE_LEFT, CHALLENGE_RIGHT])
                         state['challenge_start'] = current_time
                     
-                    # Check Challenge Compliance
                     challenge = state['challenge']
                     passed = False
                     
-                    if challenge == CHALLENGE_BLINK:
-                        if liveness_data['is_blinking']:
-                            passed = True
-                    elif challenge == CHALLENGE_SMILE:
-                        if liveness_data['is_smiling']:
-                            passed = True
-                    elif challenge == CHALLENGE_LEFT:
-                        if liveness_data['head_pose'] == "LEFT":
-                            passed = True
-                    elif challenge == CHALLENGE_RIGHT:
-                        if liveness_data['head_pose'] == "RIGHT":
-                            passed = True
+                    if challenge == CHALLENGE_BLINK and liveness_data['is_blinking']: passed = True
+                    if challenge == CHALLENGE_SMILE and liveness_data['is_smiling']: passed = True
+                    if challenge == CHALLENGE_LEFT and liveness_data['head_pose'] == "LEFT": passed = True
+                    if challenge == CHALLENGE_RIGHT and liveness_data['head_pose'] == "RIGHT": passed = True
                             
-                    # Display Challenge
                     text = CHALLENGE_TEXTS[challenge]
-                    cv2.putText(frame, text, (int(box[0]), int(box[1]) - 30),
+                    cv2.putText(frame, text, (box[0], box[1] - 30),
                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2)
                                
-                    # If passed
                     if passed:
-                        # Mark attendance!
                         success = mark_attendance(person_id, confidence)
                         if success:
                             state['verified'] = True
                             state['challenge'] = CHALLENGE_NONE
-                            
-                            # Update global cooldown
                             last_marked[person_id] = current_time
                             run_attendance_system.last_marked = last_marked
                             
-                            cv2.putText(frame, "SUCCESS!", (int(box[0]), int(box[1]) - 60),
+                            cv2.putText(frame, "SUCCESS!", (box[0], box[1] - 60),
                                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
                     
-                    # Timeout (5 seconds) -> Reset to new challenge
                     if current_time - state['challenge_start'] > 5.0:
                         state['challenge'] = CHALLENGE_NONE
-                
-            # Display info (Name at BOTTOM)
-            color = (0, 255, 0) if person_id else (0, 0, 255)
-            label = f"{name} ({confidence:.2f})"
-            
-            # Draw background for name
-            (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
-            cv2.rectangle(frame, (int(box[0]), int(box[1] + box[3])), (int(box[0] + w), int(box[1] + box[3] + h + 10)), color, -1)
-            
-            cv2.putText(frame, label, (int(box[0]), int(box[1] + box[3] + 15)),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-            
-            # Debug info for pose
-            # cv2.putText(frame, f"Y:{liveness_data['yaw']:.0f} P:{liveness_data['pitch']:.0f}", (10, 50 + 20*i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
 
-        cv2.imshow("Attendance System", frame)
+            # UI Labels
+            color = (0, 255, 0) if person_id else (0, 0, 255)
+            label = f"{name}"
+            # ArcFace confidence is -1 to 1. 0.4+ is good math.
+            if person_id: label += f" ({confidence:.2f})"
+            
+            cv2.putText(frame, label, (box[0], box[3] + 20),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+
+        cv2.imshow("Face Attendi v2 (RetinaFace+ArcFace)", frame)
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

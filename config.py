@@ -13,11 +13,17 @@ os.makedirs(ENROLLMENT_DIR, exist_ok=True)
 # Database
 DATABASE_URI = f'sqlite:///{DB_PATH}'
 
-# Face Recognition Thresholds
-THRESHOLD_RECENT = 0.6
-THRESHOLD_OLD = 0.55
+# Face Recognition Thresholds (ArcFace - Cosine Similarity)
+# Range: -1.0 to 1.0. Higher is better match.
+# 0.35 is a balanced threshold for ArcFace (buffalo_l)
+THRESHOLD_RECENT = 0.35
+THRESHOLD_OLD = 0.30
 OLD_ENCODING_AGE_MONTHS = 3
 RE_ENROLLMENT_PERIOD_MONTHS = 6
+
+# InsightFace Settings
+INSIGHTFACE_MODEL = 'buffalo_l'
+CTX_ID = 0 # 0 for GPU, -1 for CPU. Using -1 for safety unless CUDA found. (Detector handles this)
 
 # Camera
 CAMERA_ID = 0

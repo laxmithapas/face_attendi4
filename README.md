@@ -25,15 +25,14 @@ This system is designed with "Privacy by Design" principles:
 4.  **Secure Deletion**: Deleting a user triggers a "Cascading Delete" that wipes their profile, attendance history, and physical image files.
 
 ## 🔬 Research & Citations
+This system is strictly built upon State-of-the-Art (SOTA) research in Deep Learning and Biometrics (v2 Implementation).
 
-This system is built upon industry-standard research in Deep Learning and Biometrics.
-
-1.  **Deep Face Recognition**: Uses **FaceNet** (Inception ResNet V1) which maps faces into a Euclidean space where distances correspond to similarity.
+1.  **Dense Face Localization**: Uses **RetinaFace** (ResNet50 backbone) for pixel-perfect alignment.
+    *   *Citation*: Deng, J., et al. "RetinaFace: Single-stage Dense Face Localisation in the Wild." (CVPR 2020).
+2.  **Deep Face Recognition**: Uses **ArcFace** (Additive Angular Margin Loss) which maps faces into a hypersphere for superior discrimination.
     *   *Citation*: Deng, J., et al. "ArcFace: Additive Angular Margin Loss for Deep Face Recognition." (CVPR 2019).
-2.  **Robust Face Detection**: Uses **MTCNN** (Multi-task Cascaded Convolutional Networks) for aligning faces before recognition.
-    *   *Citation*: Zhang, K., et al. "Joint Face Detection and Alignment Using Multitask Cascaded Convolutional Networks." (IEEE Signal Processing Letters, 2016).
-3.  **Anti-Spoofing (Liveness)**: Implements **Challenge-Response Protocols** (Randomized Head Turns/Smiles) to prevent Replay Attacks.
-    *   *Citation*: "Face Anti-Spoofing Using Texture and Challenge-Response Protocols." (ResearchGate).
+3.  **Anti-Spoofing (Liveness)**: Implements **Multi-Stage PAD** (Presentation Attack Detection) combining texture analysis and geometric checks.
+    *   *Citation*: Yu, Z., et al. "Deep Learning for Face Anti-Spoofing: A Survey." (IEEE TPAMI 2023).
 
 ## Prerequisites
 

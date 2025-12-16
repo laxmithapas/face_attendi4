@@ -12,14 +12,18 @@ from utils import get_logger
 logger = get_logger()
 
 def enroll_user():
-    print("=== Face Recognition Enrollment ===")
+    print("=== Face Attendi v2 Enrollment (RetinaFace + ArcFace) ===")
     name = input("Enter Name: ")
     email = input("Enter Email: ")
     
     # Initialize modules
-    print("Initializing system...")
+    print("Initializing SOTA AI Models...")
     detector = FaceDetector()
-    aligner = FaceAligner()
+    try:
+        aligner = FaceAligner()
+    except:
+        aligner = None
+        
     recognizer = FaceRecognizer()
     
     # Create person in DB
@@ -49,10 +53,12 @@ def enroll_user():
             print("Failed to grab frame")
             break
             
-        # Detect face for visualization
-        boxes, probs, _ = detector.detect_faces(frame)
+        # Detect (RetinaFace)
+        faces = detector.detect_faces(frame)
+        
+        # Viz
         frame_display = frame.copy()
-        detector.draw_faces(frame_display, boxes, probs)
+        detector.draw_faces(frame_display, faces)
         
         cv2.putText(frame_display, f"Captured: {captured_count}/{required_samples}", (10, 30),
                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
@@ -63,38 +69,54 @@ def enroll_user():
         if key == ord('q'):
             break
         elif key == ord('c'):
-            if len(boxes) != 1:
+            if len(faces) != 1:
                 print("Please ensure exactly one face is visible.")
                 continue
                 
-            # Process the frame
-            # 1. Detect landmarks
-            box = boxes[0]
-            landmarks = aligner.get_landmarks(frame, box)
+            face = faces[0]
             
-            # 2. Align face
-            aligned_face = aligner.align_face(frame, landmarks)
+            # Embedding (ArcFace 512D)
+            embedding = face.embedding
+            if embedding is None:
+                print("Error: No embedding generated. Face might be too blurry/small.")
+                continue
             
-            # 3. Generate embedding
-            embedding = recognizer.get_embedding(aligned_face)
+            # Save Image (Use Dlib Aligner for consistency, or Crop Box if unavailable)
+            box = face.bbox.astype(int)
+            save_image = None
             
-            # 4. Save image and embedding
+            if aligner:
+                try:
+                     dlib_box = [box[0], box[1], box[2]-box[0], box[3]-box[1]]
+                     landmarks = aligner.get_landmarks(frame, dlib_box)
+                     save_image = aligner.align_face(frame, landmarks)
+                except:
+                     pass
+            
+            if save_image is None:
+                # Fallback crop
+                x1, y1, x2, y2 = max(0, box[0]), max(0, box[1]), min(frame.shape[1], box[2]), min(frame.shape[0], box[3])
+                save_image = frame[y1:y2, x1:x2]
+            
+            # Save Logic
             timestamp = int(time.time())
             img_filename = f"{person_id}_{timestamp}.jpg"
             img_path = os.path.join(user_dir, img_filename)
-            cv2.imwrite(img_path, aligned_face)
             
-            add_encoding(person_id, embedding, img_path)
-            
-            captured_count += 1
-            print(f"Captured sample {captured_count}/{required_samples}")
-            time.sleep(0.5) # Prevent accidental double capture
+            try:
+                cv2.imwrite(img_path, save_image)
+                add_encoding(person_id, embedding, img_path)
+                captured_count += 1
+                print(f"Captured sample {captured_count}/{required_samples}")
+                time.sleep(0.5)
+            except Exception as e:
+                print(f"Error saving: {e}")
             
     cap.release()
     cv2.destroyAllWindows()
     
     if captured_count == required_samples:
-        print(f"\nSuccessfully enrolled {name} with {captured_count} samples.")
+        print(f"\nSuccessfully enrolled {name}!")
     else:
         print("\nEnrollment incomplete.")
 
