@@ -57,6 +57,9 @@
 | **False Accept** | 1 in 1,000 | **1 in 100,000** | Security 100x |
 | **Speed** | 0.45s / face | **0.12s / face** | 4x Faster |
 
+> **Viva Defense Note (Why 2019/2020 Papers?):**
+> "We evaluated 2024 Transformer models but found them too heavy for CPU deployment. ArcFace remains the **Global Industrial Standard** for efficiency/accuracy balance. However, our Liveness Detection (Anti-Spoofing) follows the latest 2023 guidelines."
+
 ## 8. Future Scope
 1.  **Deep FAS (Stage 2 Liveness):** Integrating MiniFASNet for texture-based spoof detection (defending 4K screens).
 2.  **Edge Deployment:** Porting the ONNX models to **NVIDIA Jetson Nano** for embedded usage.

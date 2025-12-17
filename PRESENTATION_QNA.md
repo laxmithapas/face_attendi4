@@ -55,7 +55,13 @@ This document is your "Cheat Sheet" for the expert review. It covers every possi
     *   **Key Takeaway:** Angular margin loss provides better class separability than Euclidean distance based triplet loss.
     *   **Link:** [https://arxiv.org/abs/1801.07698](https://arxiv.org/abs/1801.07698)
 
-**Q9: What other papers did you study?**
+**Q9: Why utilize "Old" papers (2019/2020) instead of 2024 Research? (CRITICAL QUESTION)**
+*   **The Defense:** "We evaluated newer Transformer-based models (2024), but selected ArcFace/RetinaFace for three reasons:"
+    1.  **Industrial Standard:** ArcFace is the current *baseline for production systems*. It is stable and proven.
+    2.  **Hardware Constraints:** Newer Vision Transformers (ViTs) are extremely heavy and require expensive GPUs. Our goal was an **efficient CPU-based system** (0.1s inference), which ArcFace delivers perfectly.
+    3.  **Balanced Stack:** While the recognition core is established (2019), our **Anti-Spoofing research** (2023) is cutting-edge, balancing stability with modern security.
+
+**Q10: What other papers did you study?**
 *   **Answer:** "For detection, I moved to **'RetinaFace: Single-stage Dense Face Localisation'** (Deng et al.)."
     *   **Key Takeaway:** It taught me that pixel-wise face localisation is critical for accurate alignment.
     *   **Link:** [https://arxiv.org/abs/1905.00641](https://arxiv.org/abs/1905.00641)
