@@ -218,12 +218,22 @@ elif page == "User Management":
             st.write("### 📊 Weekly Subject Attendance")
             st.caption("Number of subjects attended per day (Max 4)")
             
+            import altair as alt
+            
             chart_data = pd.DataFrame({
                 "Day": ["Mon", "Tue", "Wed", "Thu", "Fri"],
                 "Subjects": [weekly_subjects[d] for d in ["Mon", "Tue", "Wed", "Thu", "Fri"]]
             })
             
-            st.bar_chart(chart_data, x="Day", y="Subjects")
+            c = alt.Chart(chart_data).mark_bar().encode(
+                x=alt.X('Day', sort=["Mon", "Tue", "Wed", "Thu", "Fri"], title="Day"),
+                y=alt.Y('Subjects', title="Subjects Attended", scale=alt.Scale(domain=[0, 4])),
+                tooltip=["Day", "Subjects"]
+            ).properties(
+                height=300
+            )
+            
+            st.altair_chart(c, use_container_width=True)
             
         st.divider()
         st.subheader("⚠️ Danger Zone")
